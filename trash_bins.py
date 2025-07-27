@@ -7,7 +7,9 @@ def make_trash_bin(
     w,
     h,
     bottom_stacking=True,
+    bottom_type="male",
     top_stacking=True,
+    top_type="male",
     horizontal_stacking=True,
     wt=2.0,
     tol=0.2,
@@ -30,18 +32,26 @@ def make_trash_bin(
     # 2. make the box vertically stackable (add fins to the top of the box)
     fin_w, fin_h = 1.0, 5.0
     fin_outer_size = iw + 2 * fin_w
+
+    # female fin cube
+    fin_cube_inner = cube([fin_outer_size + tol, fin_outer_size + tol, fin_h])
+    fin_cube_inner = translate([wt - fin_w - tol / 2, wt - fin_w - tol / 2, 0])(
+        fin_cube_inner
+    )
+
+    # male fin cube
+    fin_cube_outer = cube([w, w, fin_h]) - fin_cube_inner
+
     if top_stacking:
-        fin_cube = cube([fin_outer_size + tol, fin_outer_size + tol, fin_h])
-        fin_cube = translate([wt - fin_w - tol / 2, wt - fin_w - tol / 2, h - fin_h])(
-            fin_cube
+        fin_cube_top = translate([0, 0, h - fin_h])(
+            fin_cube_inner if top_type == "male" else fin_cube_outer
         )
-        hollow_box = hollow_box - fin_cube
+        hollow_box = hollow_box - fin_cube_top
 
     # 3. add connect fins to the bottom
     if bottom_stacking:
-        fin_cube_bottom = cube([fin_outer_size + tol, fin_outer_size + tol, fin_h])
-        fin_cube_bottom = translate([wt - fin_w - tol / 2, wt - fin_w - tol / 2, 0])(
-            fin_cube_bottom
+        fin_cube_bottom = translate([0, 0, 0])(
+            fin_cube_inner if top_type == "male" else fin_cube_outer
         )
         hollow_box = hollow_box - fin_cube_bottom
 
@@ -63,16 +73,27 @@ def make_trash_bin(
 
 width, height = 40, 20
 
-trash_bin_bottom, debug = make_trash_bin(width, height, bottom_stacking=False)
+trash_bin_bottom, debug = make_trash_bin(
+    width, height, bottom_stacking=False, top_stacking=True, top_type="male"
+)
 scad_render_to_file(trash_bin_bottom, f"trash_bin_bottom.scad")
 
 trash_bin_middle, debug = make_trash_bin(
-    width, height, bottom_stacking=True, top_stacking=True
+    width,
+    height,
+    bottom_stacking=True,
+    bottom_type="female",
+    top_stacking=True,
+    top_type="female",
 )
 scad_render_to_file(trash_bin_middle, f"trash_bin_middle.scad")
 
 trash_bin_top, debug = make_trash_bin(
-    width, height, bottom_stacking=True, top_stacking=False
+    width,
+    height,
+    bottom_stacking=True,
+    bottom_type="male",
+    top_stacking=False,
 )
 scad_render_to_file(trash_bin_top, f"trash_bin_top.scad")
 
