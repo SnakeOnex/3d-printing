@@ -3,7 +3,15 @@ from solid import *
 from solid.utils import *
 
 
-def make_trash_bin(w, h, bottom_stacking=True, top_stacking=True, wt=2.0, tol=0.2):
+def make_trash_bin(
+    w,
+    h,
+    bottom_stacking=True,
+    top_stacking=True,
+    horizontal_stacking=True,
+    wt=2.0,
+    tol=0.2,
+):
     iw = w - 2 * wt
     ih = h - wt
 
@@ -37,10 +45,23 @@ def make_trash_bin(w, h, bottom_stacking=True, top_stacking=True, wt=2.0, tol=0.
         )
         hollow_box = hollow_box - fin_cube_bottom
 
+    # 4. add protrusion for horizontal stacking
+    if horizontal_stacking:
+        protrusion_length = 10
+        protrusion_w = 0.5
+
+        protrusion = cube([protrusion_length, protrusion_w, h])
+        protrusion_rotated = rotate([0, 0, -90])(protrusion)
+        hollow_box = hollow_box + protrusion_rotated
+
+        protrusion = cube([protrusion_length, protrusion_w, h])
+        protrusion = translate([w - protrusion_length, w - protrusion_w, 0])(protrusion)
+        hollow_box = hollow_box - protrusion
+
     return hollow_box, {"w": w, "h": h, "iw": iw, "ih": ih}
 
 
-width, height = 40, 40
+width, height = 40, 20
 
 trash_bin_bottom, debug = make_trash_bin(width, height, bottom_stacking=False)
 scad_render_to_file(trash_bin_bottom, f"trash_bin_bottom.scad")
