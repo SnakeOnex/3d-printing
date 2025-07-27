@@ -2,7 +2,7 @@ from solid import *  # Import solidpython functions
 from solid.utils import *  # Utilities for transformations
 
 # Parameters for the glass
-outer_radius = 35  # Outer radius of the glass in mm
+outer_radius = 60  # Outer radius of the glass in mm
 height = 120  # Height of the glass in mm
 wall_thickness = 2  # Thickness of the glass walls in mm
 
