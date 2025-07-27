@@ -11,7 +11,7 @@ def make_trash_bin(
     top_stacking=True,
     top_type="male",
     horizontal_stacking=True,
-    wt=2.0,
+    wt=4.0,
     tol=0.2,
 ):
     iw = w - 2 * wt
@@ -58,15 +58,30 @@ def make_trash_bin(
     # 4. add protrusion for horizontal stacking
     if horizontal_stacking:
         protrusion_length = 10
-        protrusion_w = 0.5
+        protrusion_w = 1.0
+        clip_length = 2.0
 
         protrusion = cube([protrusion_length, protrusion_w, h])
-        protrusion_rotated = rotate([0, 0, -90])(protrusion)
+        clippy_part_male = cube([clip_length - 0.1, protrusion_w - 0.1, h])
+        clippy_part_female = cube([clip_length + 0.1, protrusion_w + 0.1, h])
+
+        clippy_part_male = translate([protrusion_length, 0, 0])(
+            rotate([0, 0, 90])(clippy_part_male)
+        )
+        clippy_part_female = translate([protrusion_length, 0, 0])(
+            rotate([0, 0, 90])(clippy_part_female)
+        )
+        protrusion_positive = protrusion + clippy_part_male
+        protrusion_negative = protrusion + clippy_part_female
+
+        # a. add the extended wall with a clippy part
+        protrusion_rotated = rotate([0, 0, -90])(protrusion_positive)
         hollow_box = hollow_box + protrusion_rotated
 
-        protrusion = cube([protrusion_length, protrusion_w, h])
-        protrusion = translate([w - protrusion_length, w - protrusion_w, 0])(protrusion)
-        hollow_box = hollow_box - protrusion
+        # b. add the cavity in the wall with a hole
+        protrusion_rotated = rotate([0, 0, 180])(protrusion_negative)
+        protrusion_rotated = translate([w, w, 0])(protrusion_rotated)
+        hollow_box = hollow_box - protrusion_rotated
 
     return hollow_box, {"w": w, "h": h, "iw": iw, "ih": ih}
 
