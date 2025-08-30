@@ -11,6 +11,7 @@ def make_trash_bin(
     top_stacking=True,
     top_type="male",
     horizontal_stacking=True,
+    horizontal_type="male",
     wt=4.0,
     tol=0.2,
 ):
@@ -57,7 +58,7 @@ def make_trash_bin(
 
     # 4. add protrusion for horizontal stacking
     if horizontal_stacking:
-        protrusion_length = 10
+        protrusion_length = 3.0
         protrusion_w = 1.0
         clip_length = 2.0
 
@@ -65,33 +66,79 @@ def make_trash_bin(
         clippy_part_male = cube([clip_length - 0.1, protrusion_w - 0.1, h])
         clippy_part_female = cube([clip_length + 0.1, protrusion_w + 0.1, h])
 
-        clippy_part_male = translate([protrusion_length, 0, 0])(
+        clippy_part_male_l = translate([protrusion_length, 0, 0])(
             rotate([0, 0, 90])(clippy_part_male)
         )
-        clippy_part_female = translate([protrusion_length, 0, 0])(
+        clippy_part_male_inv_l = translate([protrusion_length - protrusion_w, 0, 0])(
+            rotate([0, 0, -90])(clippy_part_male)
+        )
+        clippy_part_female_l = translate([protrusion_length, 0, 0])(
             rotate([0, 0, 90])(clippy_part_female)
         )
-        protrusion_positive = protrusion + clippy_part_male
-        protrusion_negative = protrusion + clippy_part_female
+        clippy_part_female_inv_l = translate([protrusion_length - protrusion_w, 0, 0])(
+            rotate([0, 0, -90])(clippy_part_female)
+        )
+        protrusion_positive = protrusion + clippy_part_male_l
+        protrusion_positive_inv_l = protrusion + clippy_part_female_inv_l
+        protrusion_positive_inv_l = (
+            translate([0, -protrusion_w, 0])(protrusion) + clippy_part_male_inv_l
+        )
 
-        # a. add the extended wall with a clippy part
-        protrusion_rotated = rotate([0, 0, -90])(protrusion_positive)
-        hollow_box = hollow_box + protrusion_rotated
+        protrusion_negative = protrusion + clippy_part_female_l
+        protrusion_negative_inv_l = protrusion + clippy_part_female_inv_l
+        protrusion_negative_inv_l = (
+            translate([0, -protrusion_w, 0])(protrusion) + clippy_part_female_inv_l
+        )
 
-        # b. add the cavity in the wall with a hole
-        protrusion_rotated = rotate([0, 0, 180])(protrusion_negative)
-        protrusion_rotated = translate([w, w, 0])(protrusion_rotated)
-        hollow_box = hollow_box - protrusion_rotated
+        protrusion_negative_opp = protrusion + clippy_part_female
+
+        if horizontal_type == "male":
+            # a. add the extended wall with a clippy part
+            protrusion_rotated = rotate([0, 0, 180])(protrusion_positive)
+            protrusion_rotated = translate([0, w, 0])(protrusion_rotated)
+            hollow_box = hollow_box + protrusion_rotated
+
+            # b. add the extended wall with a clippy part
+            protrusion_rotated = rotate([0, 0, -90])(protrusion_positive_inv_l)
+            protrusion_rotated = translate([w, 0, 0])(protrusion_rotated)
+            hollow_box = hollow_box + protrusion_rotated
+        else:
+            # a. add the cavity in the wall with a hole
+            protrusion_rotated = rotate([0, 0, 180])(protrusion_negative)
+            protrusion_rotated = translate([w, w, 0])(protrusion_rotated)
+            hollow_box = hollow_box - protrusion_rotated
+
+            # b.
+            protrusion_rotated = rotate([0, 0, 90])(protrusion_negative_inv_l)
+            # protrusion_rotated = translate([w, w, 0])(protrusion_rotated)
+            hollow_box = hollow_box - protrusion_rotated
 
     return hollow_box, {"w": w, "h": h, "iw": iw, "ih": ih}
 
 
-width, height = 40, 20
+width, height = 20, 20
 
 trash_bin_bottom, debug = make_trash_bin(
-    width, height, bottom_stacking=False, top_stacking=True, top_type="male"
+    width,
+    height,
+    bottom_stacking=False,
+    top_stacking=True,
+    top_type="male",
+    horizontal_stacking=True,
+    horizontal_type="male",
 )
-scad_render_to_file(trash_bin_bottom, f"trash_bin_bottom.scad")
+scad_render_to_file(trash_bin_bottom, f"trash_bin_bottom_male.scad")
+
+trash_bin_bottom, debug = make_trash_bin(
+    width,
+    height,
+    bottom_stacking=False,
+    top_stacking=True,
+    top_type="male",
+    horizontal_stacking=True,
+    horizontal_type="female",
+)
+scad_render_to_file(trash_bin_bottom, f"trash_bin_bottom_female.scad")
 
 trash_bin_middle, debug = make_trash_bin(
     width,
@@ -113,5 +160,7 @@ trash_bin_top, debug = make_trash_bin(
 scad_render_to_file(trash_bin_top, f"trash_bin_top.scad")
 
 os.system(f"openscad -o trash_bin_bottom.stl trash_bin_bottom.scad")
+os.system(f"openscad -o trash_bin_bottom_female.stl trash_bin_bottom_female.scad")
+os.system(f"openscad -o trash_bin_bottom_male.stl trash_bin_bottom_male.scad")
 os.system(f"openscad -o trash_bin_middle.stl trash_bin_middle.scad")
 os.system(f"openscad -o trash_bin_top.stl trash_bin_top.scad")
